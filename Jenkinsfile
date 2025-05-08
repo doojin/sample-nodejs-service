@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    // triggers {
-    //    githubPush()
-    // }
+    triggers {
+       githubPush()
+    }
 
     stages {
         stage('Hello, world!') {
