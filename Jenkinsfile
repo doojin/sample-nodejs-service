@@ -5,7 +5,10 @@ pipeline {
         stage('Hello, world!') {
             steps {
                 withChecks(name: 'Hello, check!') {
-                    sh 'echo Hello, world!'
+                    sh '''
+                        echo "Doing something"
+                        exit 0
+                    '''
                 }
             }
         }
