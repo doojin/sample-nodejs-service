@@ -43,6 +43,5 @@ export class ProfilesController {
   @Delete('/:id')
   delete(@Param('id', ParseIntPipe) id: number) {
     this.profilesService.delete(id);
-    console.log('test');
   }
 }
