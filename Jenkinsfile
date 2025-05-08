@@ -5,10 +5,14 @@ pipeline {
         stage('Hello, world!') {
             steps {
                 withChecks(name: 'Hello, check!') {
-                    sh '''
-                        echo "Doing something"
-                        exit 0
-                    '''
+                    script {
+                        writeFile file: 'test.xml', text: '''
+                        <testsuite tests="1">
+                          <testcase classname="dummy" name="test"/>
+                        </testsuite>
+                        '''
+                        junit 'test.xml'
+                    }
                 }
             }
         }
