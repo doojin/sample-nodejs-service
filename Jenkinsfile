@@ -4,17 +4,10 @@ pipeline {
     stages {
         stage('Hello, world!') {
             steps {
-                echo 'I\'m actually working!'
+                withChecks(name: 'Hello, check!') {
+                    echo 'I\'m actually working!'
+                }
             }
-        }
-    }
-
-    post {
-        success {
-            githubNotify context: 'CI / Build', status: 'SUCCESS'
-        }
-        failure {
-            githubNotify context: 'CI / Build', status: 'FAILURE'
         }
     }
 }
