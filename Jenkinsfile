@@ -18,5 +18,29 @@ pipeline {
                 }
             }
         }
+
+        stage('Basic checks') {
+            parallel {
+                stage('Lint') {
+                    steps {
+                        withChecks(name: 'ESLint') {
+                            unstash 'node_modules'
+                            sh 'npm run lint'
+                            publishChecks name: 'ESLint', status: 'COMPLETED', conclusion: 'SUCCESS'
+                        }
+                    }
+                }
+
+                stage('Unit tests') {
+                    steps {
+                        withChecks(name: 'Unit tests') {
+                            unstash 'node_modules'
+                            sh 'npm run test'
+                            publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
+                        }
+                    }
+                }
+            }
+        }
     }
 }
