@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        stage('Hello, world!') {
+        stage('Build') {
             steps {
                 withChecks(name: 'Build project') {
                     sh 'npm run build'
