@@ -22,6 +22,7 @@ pipeline {
         stage('Basic checks') {
             parallel {
                 stage('Lint') {
+                    agent any
                     steps {
                         withChecks(name: 'ESLint') {
                             unstash 'node_modules'
@@ -32,6 +33,7 @@ pipeline {
                 }
 
                 stage('Unit tests') {
+                    agent any
                     steps {
                         withChecks(name: 'Unit tests') {
                             unstash 'node_modules'
