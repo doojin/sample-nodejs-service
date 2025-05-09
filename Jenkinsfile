@@ -4,9 +4,9 @@ pipeline {
     stages {
         stage('Hello, world!') {
             steps {
-                withChecks(name: 'Hello, check!') {
-                    echo 'Hello, world!'
-                    publishChecks name: 'Hello, check!', status: 'COMPLETED', conclusion: 'SUCCESS'
+                withChecks(name: 'Build project') {
+                    sh 'npm run build'
+                    // publishChecks name: 'Build project', status: 'COMPLETED', conclusion: 'SUCCESS'
                 }
             }
         }
