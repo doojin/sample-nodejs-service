@@ -1,2 +1,15 @@
 image:
   tag: staging
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+probe:
+  path: /health
+  port: 80
+  initialDelaySeconds: 3
+  timeoutSeconds: 5
+  failureThreshold: 3
+  periodSeconds: 10

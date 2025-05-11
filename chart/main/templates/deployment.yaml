@@ -1,24 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-nodejs-service
+  name: {{ include "main.fullname" . }}
   labels:
-    app: sample-nodejs-service
+    app: {{ include "main.fullname" . }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sample-nodejs-service
+      app: {{ include "main.fullname" . }}
   template:
     metadata:
       labels:
-        app: sample-nodejs-service
+        app: {{ include "main.fullname" . }}
     spec:
       containers:
-        - name: sample-nodejs-service
+        - name: {{ include "main.name" . }}
           image: dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}
           ports:
             - containerPort: 80
           env:
             - name: PORT
               value: "80"
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.probe.port }}
+              path: {{ .Values.probe.path }}
+            initialDelaySeconds: {{ .Values.probe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probe.timeoutSeconds }}
+            failureThreshold: {{ .Values.probe.failureThreshold }}
+            periodSeconds: {{ .Values.probe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              port: {{ .Values.probe.port }}
+              path: {{ .Values.probe.path }}
+            initialDelaySeconds: {{ .Values.probe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probe.timeoutSeconds }}
+            failureThreshold: {{ .Values.probe.failureThreshold }}
+            periodSeconds: {{ .Values.probe.periodSeconds }}
