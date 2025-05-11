@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-nodejs-service-deployment
+  labels:
+    app: sample-nodejs-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-nodejs-service-deployment
+  template:
+    metadata:
+      labels:
+        app: sample-nodejs-service-deployment
+    spec:
+      containers:
+        - name: sample-nodejs-service
+          image: dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 80
+          env:
+            - name: PORT
+              value: "80"
