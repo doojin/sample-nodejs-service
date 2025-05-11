@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: {{ include "main.name" . }}
-          image: dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}
+          image: "dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}"
           ports:
             - containerPort: 80
           env:
