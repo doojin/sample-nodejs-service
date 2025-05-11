@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-nodejs-service-deployment
+  name: sample-nodejs-service
   labels:
-    app: sample-nodejs-service-deployment
+    app: sample-nodejs-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sample-nodejs-service-deployment
+      app: sample-nodejs-service
   template:
     metadata:
       labels:
-        app: sample-nodejs-service-deployment
+        app: sample-nodejs-service
     spec:
       containers:
         - name: sample-nodejs-service
