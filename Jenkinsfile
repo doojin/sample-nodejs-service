@@ -45,6 +45,38 @@ pipeline {
                 }
             }
         }
+
+        stage('Image build') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def image = 'dmi3papka/sample-nodejs-service'
+                    def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def tag = "staging-${commit}"
+                    try {
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: 'docker-hub', 
+                                usernameVariable: 'DOCKER_USER', 
+                                passwordVariable: 'DOCKER_PASSWORD'
+                            )
+                        ]) {
+                            sh "echo \"$DOCKER_PASSWORD\" | docker login -u \"$DOCKER_USER\" --password-stdin"
+                        }
+
+                        sh "docker image build -t ${image}:${tag} ."
+                        sh "docker image tag ${image}:${tag} ${image}:staging"
+
+                        sh "docker push ${image}:${tag}"
+                        sh "docker push ${image}:staging"
+                    } finally {
+                        sh 'docker logout'
+                    }
+                }
+            }
+        }
     }
 
     post {
