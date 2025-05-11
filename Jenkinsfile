@@ -79,7 +79,9 @@ pipeline {
                                 passwordVariable: 'DOCKER_PASSWORD'
                             )
                         ]) {
-                            sh "echo \"$DOCKER_PASSWORD\" | docker login -u \"$DOCKER_USER\" --password-stdin"
+                            sh '''
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+                            '''
                         }
 
                         sh "docker image build -t ${image}:${tag} ."
@@ -107,7 +109,7 @@ pipeline {
                         def tag = readFile('image-tag.txt').trim()
 
                         sh """
-                            export KUBECONFIG=${KUBECONFIG_FILE}
+                            export KUBECONFIG=\${KUBECONFIG_FILE}
                             helm upgrade --install -f ./chart/main/values.yaml \\
                                 --set image.tag=${tag} \\
                                 sample-nodejs-service ./chart/main
