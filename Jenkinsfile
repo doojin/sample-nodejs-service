@@ -2,6 +2,20 @@ pipeline {
     agent any
 
     stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def tag = "staging-${commit}"
+
+                    writeFile file: 'image-tag.txt', text: tag
+                    writeFile file: 'image-name.txt', text: 'dmi3papka/sample-nodejs-service'
+
+                    stash name: 'image-metadata', includes: 'image-tag.txt,image-name.txt'
+                }
+            }
+        }
+
         stage('Install') {
             steps {
                 sh 'npm install'
@@ -51,10 +65,12 @@ pipeline {
                 branch 'main'
             }
             steps {
+                unstash 'image-metadata'
+
                 script {
-                    def image = 'dmi3papka/sample-nodejs-service'
-                    def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def tag = "staging-${commit}"
+                    def image = readFile('image-name.txt').trim()
+                    def tag = readFile('image-tag.txt').trim()
+
                     try {
                         withCredentials([
                             usernamePassword(
@@ -73,6 +89,29 @@ pipeline {
                         sh "docker push ${image}:staging"
                     } finally {
                         sh 'docker logout'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy staging') {
+            when {
+                branch 'main'
+            }
+
+            steps {
+                unstash 'image-metadata'
+
+                withCredentials([file(credentialsId: 'kube-config-staging', variable: 'KUBECONFIG_FILE')]) {
+                    script {
+                        def tag = readFile('image-tag.txt').trim()
+
+                        sh """
+                            export KUBECONFIG=${KUBECONFIG_FILE}
+                            helm upgrade --install -f ./chart/main/values.yaml \\
+                                --set image.tag=${tag} \\
+                                sample-nodejs-service ./chart/main
+                        """
                     }
                 }
             }
