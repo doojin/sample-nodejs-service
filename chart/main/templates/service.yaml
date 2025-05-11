@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: sample-nodejs-service
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: sample-nodejs-service
   ports:
-    - port: 8000
+    - port: 80
       targetPort: 80
       protocol: TCP
       name: http
