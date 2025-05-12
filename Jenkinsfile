@@ -5,8 +5,9 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
+                    def tagName = env.GIT_TAG_NAME || env.TAG_NAME
                     def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def tag = "staging-${commit}"
+                    def tag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
 
                     writeFile file: 'image-tag.txt', text: tag
                     writeFile file: 'image-name.txt', text: 'dmi3papka/sample-nodejs-service'
@@ -64,6 +65,7 @@ pipeline {
             when {
                 branch 'main'
             }
+
             steps {
                 unstash 'image-metadata'
 
@@ -85,10 +87,16 @@ pipeline {
                         }
 
                         sh "docker image build -t ${image}:${tag} ."
-                        sh "docker image tag ${image}:${tag} ${image}:staging"
-
                         sh "docker push ${image}:${tag}"
-                        sh "docker push ${image}:staging"
+
+                        if (env.GIT_TAG_NAME || env.TAG_NAME) {
+                            sh "docker image tag ${image}:${tag} ${image}:staging"
+                            sh "docker push ${image}:staging"
+                        } else {
+                            sh "docker image tag ${image}:${tag} ${image}:latest"
+                            sh "docker push ${image}:latest"
+                        }
+
                     } finally {
                         sh 'docker logout'
                     }
@@ -96,7 +104,7 @@ pipeline {
             }
         }
 
-        stage('Deploy staging') {
+        stage('Deploy image') {
             when {
                 branch 'main'
             }
@@ -104,8 +112,11 @@ pipeline {
             steps {
                 unstash 'image-metadata'
 
-                withCredentials([file(credentialsId: 'kube-config-staging', variable: 'KUBECONFIG_FILE')]) {
-                    script {
+                script {
+                    def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
+                    def credentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
+
+                    withCredentials([file(credentialsId: credentialsId, variable: 'KUBECONFIG_FILE')]) {
                         def tag = readFile('image-tag.txt').trim()
 
                         sh """
