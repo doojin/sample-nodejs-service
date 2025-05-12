@@ -5,7 +5,7 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    def tagName = env.GIT_TAG_NAME || env.TAG_NAME
+                    def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
                     def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     def tag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
 
