@@ -61,7 +61,7 @@ pipeline {
             }
         }
 
-        stage('Image build') {
+        stage('Build image') {
             when {
                 anyOf {
                     branch 'main'
