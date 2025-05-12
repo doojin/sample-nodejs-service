@@ -63,7 +63,12 @@ pipeline {
 
         stage('Image build') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    expression {
+                        env.BRANCH_NAME ==~ /^v\d+\.\d+\.\d+$/
+                    }
+                }
             }
 
             steps {
@@ -106,7 +111,12 @@ pipeline {
 
         stage('Deploy image') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    expression {
+                        env.BRANCH_NAME ==~ /^v\d+\.\d+\.\d+$/
+                    }
+                }
             }
 
             steps {
