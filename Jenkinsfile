@@ -1,18 +1,18 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'dmi3papka/sample-nodejs-service'
+        IMAGE_TAG_NAME = ''
+    }
+
     stages {
         stage('Prepare') {
             steps {
                 script {
                     def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
                     def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def tag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
-
-                    writeFile file: 'image-tag.txt', text: tag
-                    writeFile file: 'image-name.txt', text: 'dmi3papka/sample-nodejs-service'
-
-                    stash name: 'image-metadata', includes: 'image-tag.txt,image-name.txt'
+                    env.IMAGE_TAG_NAME = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
                 }
             }
         }
@@ -53,7 +53,7 @@ pipeline {
                         withChecks(name: 'Unit tests') {
                             unstash 'node_modules'
                             sh 'npm run test:ci'
-                            junit 'junit.xml'
+                            junit (allowEmptyResults: true, testResults: 'junit.xml')
                             publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
                         }
                     }
@@ -72,12 +72,7 @@ pipeline {
             }
 
             steps {
-                unstash 'image-metadata'
-
                 script {
-                    def image = readFile('image-name.txt').trim()
-                    def tag = readFile('image-tag.txt').trim()
-
                     try {
                         withCredentials([
                             usernamePassword(
@@ -91,15 +86,15 @@ pipeline {
                             '''
                         }
 
-                        sh "docker image build -t ${image}:${tag} ."
-                        sh "docker push ${image}:${tag}"
+                        sh "docker image build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG_NAME} ."
+                        sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG_NAME}"
 
                         if (env.GIT_TAG_NAME || env.TAG_NAME) {
-                            sh "docker image tag ${image}:${tag} ${image}:staging"
-                            sh "docker push ${image}:staging"
+                            sh "docker image tag ${env.IMAGE_NAME}:${env.IMAGE_TAG_NAME} ${env.IMAGE_NAME}:staging"
+                            sh "docker push ${env.IMAGE_NAME}:staging"
                         } else {
-                            sh "docker image tag ${image}:${tag} ${image}:latest"
-                            sh "docker push ${image}:latest"
+                            sh "docker image tag ${env.IMAGE_NAME}:${env.IMAGE_TAG_NAME} ${env.IMAGE_NAME}:latest"
+                            sh "docker push ${env.IMAGE_NAME}:latest"
                         }
 
                     } finally {
@@ -120,19 +115,15 @@ pipeline {
             }
 
             steps {
-                unstash 'image-metadata'
-
                 script {
                     def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
                     def credentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
 
                     withCredentials([file(credentialsId: credentialsId, variable: 'KUBECONFIG_FILE')]) {
-                        def tag = readFile('image-tag.txt').trim()
-
                         sh """
                             export KUBECONFIG=\${KUBECONFIG_FILE}
                             helm upgrade --install -f ./chart/main/values.yaml \\
-                                --set image.tag=${tag} \\
+                                --set image.tag=${env.IMAGE_TAG_NAME} \\
                                 sample-nodejs-service ./chart/main
                         """
                     }

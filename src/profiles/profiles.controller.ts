@@ -10,7 +10,8 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { Profile, ProfilesService } from './profiles.service';
+import { ProfilesService } from './profiles.service';
+import { Profile } from './profile.entity';
 
 @Controller('profiles')
 export class ProfilesController {
@@ -18,8 +19,8 @@ export class ProfilesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() profile: Omit<Profile, 'id'>) {
-    this.profilesService.create(profile);
+  async create(@Body() profile: Omit<Profile, 'id'>) {
+    await this.profilesService.create(profile);
   }
 
   @Get()
@@ -33,15 +34,15 @@ export class ProfilesController {
   }
 
   @Put('/:id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() profile: Omit<Profile, 'id'>,
   ) {
-    this.profilesService.update(id, profile);
+    await this.profilesService.update(id, profile);
   }
 
   @Delete('/:id')
-  delete(@Param('id', ParseIntPipe) id: number) {
-    this.profilesService.delete(id);
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    await this.profilesService.delete(id);
   }
 }
