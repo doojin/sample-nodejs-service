@@ -5,7 +5,7 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    docker.image('alpine/git:2.47.2').inside {
+                    docker.image('alpine/git:2.47.2').inside('--entrypoint=tail -- tail -f /dev/null') {
                         def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
                         def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                         def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
