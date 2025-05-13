@@ -130,9 +130,14 @@ pipeline {
                             credentialsId: dbCredentialsId,
                             usernameVariable: 'DB_USERNAME',
                             passwordVariable: 'DB_PASSWORD'
+                        ),
+                        file(
+                            credentialsId: kubeConfigCredentialsId,
+                            variable: 'KUBECONFIG_FILE'
                         )
                     ]) {
                         sh """
+                            export KUBECONFIG=\${KUBECONFIG_FILE}
                             kubectl create secret generic db-password \\
                                 --from-literal=username=\$DB_USERNAME \\
                                 --from-literal=password=\$DB_PASSWORD \\
