@@ -152,6 +152,9 @@ pipeline {
                     withCredentials([file(credentialsId: kubeConfigCredentialsId, variable: 'KUBECONFIG_FILE')]) {
                         sh """
                             export KUBECONFIG=\${KUBECONFIG_FILE}
+                            helm repo add bitnami https://charts.bitnami.com/bitnami
+                            helm repo update
+                            helm dependency build chart/main
                             helm upgrade --install -f ./chart/main/values.yaml \\
                                 --set image.tag=${imageTag} \\
                                 sample-nodejs-service ./chart/main
