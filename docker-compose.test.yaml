@@ -1,0 +1,7 @@
+services:
+  db:
+    environment:
+      POSTGRES_DB: app_test
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
