@@ -4,7 +4,10 @@ pipeline {
     stages {
         stage('Prepare') {
             agent {
-                docker { image 'alpine/git:2.47.2' }
+                docker { 
+                    image 'alpine/git:2.47.2'
+                    args '--entrypoint=/bin/sh'
+                }
             }
             steps {
                 script {
