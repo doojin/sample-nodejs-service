@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "main.fullname" . }}-migration
+  name: "{{ include "main.fullname" . }}-migration-{{ randAlphaNum 5 | lower }}"
   labels:
     app: {{ include "main.name" . }}
   annotations:
