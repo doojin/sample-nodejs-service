@@ -5,7 +5,7 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    docker.image('bitnami/git:latest').inside {
+                    docker.image('bitnami/git:2.49.0').inside('--entrypoint=') {
                         def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
                         def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                         def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
