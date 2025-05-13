@@ -5,9 +5,7 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    docker.image('node:20-alpine').inside('--user=root') {
-                        sh 'apk add --no-cache git'
-
+                    docker.image('bitnami/git:latest') {
                         def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
                         def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                         def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
