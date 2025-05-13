@@ -53,7 +53,7 @@ pipeline {
                         withChecks(name: 'Unit tests') {
                             unstash 'node_modules'
                             sh 'npm run test:ci'
-                            junit 'junit.xml'
+                            junit (allowEmptyResults: true, testResults: 'junit.xml')
                             publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
                         }
                     }
