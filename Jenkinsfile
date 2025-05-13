@@ -123,6 +123,7 @@ pipeline {
                 script {
                     def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
                     def dbCredentialsId = isTagBuild ? 'postgres-prod' : 'postgres-staging'
+                    def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
 
                     // Preparing database secrets
                     withCredentials([
@@ -146,7 +147,6 @@ pipeline {
                     }
 
                     // Releasing Helm chart
-                    def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
                     def imageTag = readFile('image-tag.txt').trim()
 
                     withCredentials([file(credentialsId: kubeConfigCredentialsId, variable: 'KUBECONFIG_FILE')]) {
