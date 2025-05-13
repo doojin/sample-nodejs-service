@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "main.fullname" . }}-migration
+  labels:
+    app: {{ include "main.name" . }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrations
+          image: "dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}"
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: DB_HOST
+              value: sample-nodejs-service-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-password
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-password
+                  key: password
+            - name: DB_DATABASE
+              value: app
+          command: ["npm", "run", "migrate"]
