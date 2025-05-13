@@ -122,10 +122,29 @@ pipeline {
                 unstash 'image-metadata'
                 script {
                     def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
-                    def credentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
+                    def dbCredentialsId = isTagBuild ? 'postgres-prod' : 'postgres-staging'
+
+                    // Preparing database secrets
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: dbCredentialsId,
+                            usernameVariable: 'DB_USERNAME',
+                            passwordVariable: 'DB_PASSWORD'
+                        )
+                    ]) {
+                        sh """
+                            kubectl create secret generic db-password \\
+                                --from-literal=username=\$DB_USERNAME \\
+                                --from-literal=password=\$DB_PASSWORD \\
+                                --dry-run=client -o yaml | kubectl apply -f -
+                        """
+                    }
+
+                    // Releasing Helm chart
+                    def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
                     def imageTag = readFile('image-tag.txt').trim()
 
-                    withCredentials([file(credentialsId: credentialsId, variable: 'KUBECONFIG_FILE')]) {
+                    withCredentials([file(credentialsId: kubeConfigCredentialsId, variable: 'KUBECONFIG_FILE')]) {
                         sh """
                             export KUBECONFIG=\${KUBECONFIG_FILE}
                             helm upgrade --install -f ./chart/main/values.yaml \\

@@ -13,3 +13,9 @@ probe:
   timeoutSeconds: 5
   failureThreshold: 3
   periodSeconds: 10
+
+postgresql:
+  auth:
+    username: app_user
+    database: app
+    existingSecret: db-password
