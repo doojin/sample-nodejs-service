@@ -3,6 +3,9 @@ pipeline {
 
     stages {
         stage('Prepare') {
+            agent {
+                docker { image 'alpine/git:2.47.2' }
+            }
             steps {
                 script {
                     def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
