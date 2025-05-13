@@ -1,45 +1,37 @@
 import { Injectable } from '@nestjs/common';
-
-export interface Profile {
-  id: number;
-  firstName: string;
-  lastName: string;
-  age: number;
-}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Profile } from './profile.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProfilesService {
-  profiles: Profile[] = [];
+  constructor(
+    @InjectRepository(Profile)
+    private readonly profilesRepository: Repository<Profile>,
+  ) {}
 
-  create(profile: Omit<Profile, 'id'>): void {
-    this.profiles.push({
-      ...profile,
-      id: this.generateId(),
+  async create(profile: Omit<Profile, 'id'>): Promise<void> {
+    delete profile['id'];
+    await this.profilesRepository.save(profile);
+  }
+
+  getAll(): Promise<Profile[]> {
+    return this.profilesRepository.find();
+  }
+
+  getOne(id: number): Promise<Profile | null> {
+    return this.profilesRepository.findOne({
+      where: {
+        id,
+      },
     });
   }
 
-  getAll(): Profile[] {
-    return structuredClone(this.profiles);
+  async update(id: number, profile: Omit<Profile, 'id'>): Promise<void> {
+    await this.profilesRepository.save({ ...profile, id });
   }
 
-  getOne(id: number): Profile | null {
-    const profile = this.profiles.find((profile) => profile.id === id);
-    return profile ? structuredClone(profile) : null;
-  }
-
-  update(id: number, profile: Omit<Profile, 'id'>): void {
-    const index = this.profiles.findIndex((profile) => profile.id === id);
-    this.profiles[index] = {
-      ...profile,
-      id,
-    };
-  }
-
-  delete(id: number): void {
-    this.profiles = this.profiles.filter((profile) => profile.id !== id);
-  }
-
-  private generateId(): number {
-    return Math.floor(Math.random() * 1_000_000_000);
+  async delete(id: number): Promise<void> {
+    await this.profilesRepository.delete(id);
   }
 }
