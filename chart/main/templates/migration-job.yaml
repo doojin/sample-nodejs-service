@@ -12,6 +12,10 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      initContainers:
+        - name: wait-for-database
+          image: postgres:17.5
+          command: ["sh", "-c", "until pg_isready -h sample-nodejs-service-postgresql -p 5432; do echo 'waiting for database to be ready'; sleep 2; done"]
       containers:
         - name: migrations
           image: "dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}"

@@ -14,6 +14,10 @@ spec:
       labels:
         app: {{ include "main.fullname" . }}
     spec:
+      initContainers:
+        - name: wait-for-database
+          image: postgres:17.5
+          command: ["sh", "-c", "until pg_isready -h sample-nodejs-service-postgresql -p 5432; do echo 'waiting for database to be ready'; sleep 2; done"]
       containers:
         - name: {{ include "main.name" . }}
           image: "dmi3papka/sample-nodejs-service:{{ .Values.image.tag }}"
