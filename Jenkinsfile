@@ -23,6 +23,8 @@ pipeline {
             steps {
                 script {
                     docker.image("node:24-slim").inside {
+                        sh 'rm -rf node_modules'
+                        sh 'npm config set cache /tmp/npm-cache --global'
                         sh 'npm ci'
                         stash name: 'node_modules', includes: 'node_modules/**'
                     }
