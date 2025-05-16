@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     docker.image("node:24-slim").inside {
-                        sh 'npm install'
+                        sh 'npm ci'
                         stash name: 'node_modules', includes: 'node_modules/**'
                     }
                 }
