@@ -22,7 +22,7 @@ pipeline {
         stage('Install') {
             steps {
                 script {
-                    docker.image("node:24-slim").inside {
+                    docker.image("node:24-slim").inside('-e HOME=/tmp/home') {
                         sh 'rm -rf node_modules'
                         sh 'npm config set cache /tmp/npm-cache --location=user'
                         sh 'npm ci'
