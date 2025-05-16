@@ -22,7 +22,7 @@ pipeline {
         stage('Install') {
             steps {
                 script {
-                    docker.image("node:alpine").inside {
+                    docker.image("node:24-slim").inside {
                         sh 'npm install'
                         stash name: 'node_modules', includes: 'node_modules/**'
                     }
