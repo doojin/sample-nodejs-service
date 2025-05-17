@@ -100,33 +100,35 @@ pipeline {
                             passwordVariable: 'DOCKER_PASSWORD'
                         )
                     ]) {
-                        writeFile file: '.docker-config.json', text: """
+                    def authJson = '''
                         {
                             "auths": {
                                 "https://index.docker.io/v1/": {
-                                    "username": "${DOCKER_USER}",
-                                    "password": "${DOCKER_PASSWORD}"
+                                    "username": "%s",
+                                    "password": "%s"
                                 }
                             }
                         }
-                        """
-                    }
-
+                    '''.stripIndent().trim()
+                    
+                    def config = String.format(authJson, env.DOCKER_USER, env.DOCKER_PASSWORD)
+                    writeFile file: '.docker-config.json', text: config
+                    
                     def imageName = readFile('image-name.txt').trim()
                     def imageTag = readFile('image-tag.txt').trim()
-                    def imageTagEnvironment = env.GIT_TAG_NAME || env.TAG_NAME ? 'staging' : 'latest'
+                    def imageTagEnvironment = (env.GIT_TAG_NAME || env.TAG_NAME) ? 'staging' : 'latest'
 
-                    docker.image('gcr.io/kaniko-project/executor:latest').inside(
-                        "-v ${pwd()}:/workspace -v ${pwd()}/.docker-config.json:/kaniko/.docker/config.json"
-                    ) {
-                        sh """
+                    sh """
+                        docker run --rm \
+                            -v ${pwd()}:/workspace \
+                            -v ${pwd()}/.docker-config.json:/kaniko/.docker/config.json \
+                            gcr.io/kaniko-project/executor:latest \
                             /kaniko/executor \
                                 --context=/workspace \
                                 --dockerfile=/workspace/Dockerfile \
                                 --destination=${imageName}:${imageTag} \
                                 --destination=${imageName}:${imageTagEnvironment}
-                        """
-                    }
+                    """
                 }
             }
         }
