@@ -123,7 +123,6 @@ pipeline {
                                 -v ${pwd()}:/workspace \
                                 -v ${pwd()}/.docker-config.json:/kaniko/.docker/config.json \
                                 gcr.io/kaniko-project/executor:latest \
-                                /kaniko/executor \
                                     --context=/workspace \
                                     --dockerfile=/workspace/Dockerfile \
                                     --destination=${imageName}:${imageTag} \
