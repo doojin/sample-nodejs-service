@@ -22,7 +22,7 @@ pipeline {
         stage('Install') {
             steps {
                 script {
-                    docker.image("node:24-slim").inside('-e HOME=/tmp/home') {
+                    docker.image('node:24-slim').inside('-e HOME=/tmp/home') {
                         sh 'npm config set cache /tmp/npm-cache --location=user'
                         sh 'npm ci'
                         stash name: 'node_modules', includes: 'node_modules/**'
@@ -33,10 +33,14 @@ pipeline {
 
         stage('Build') {
             steps {
-                withChecks(name: 'Build project') {
-                    unstash 'node_modules'
-                    sh 'npm run build'
-                    publishChecks name: 'Build project', status: 'COMPLETED', conclusion: 'SUCCESS'
+                script {
+                    docker.image('node:24-slim').inside {
+                        withChecks(name: 'Build project') {
+                            unstash 'node_modules'
+                            sh 'npm run build'
+                            publishChecks name: 'Build project', status: 'COMPLETED', conclusion: 'SUCCESS'
+                        }
+                    }
                 }
             }
         }
