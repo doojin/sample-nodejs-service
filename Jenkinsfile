@@ -100,35 +100,36 @@ pipeline {
                             passwordVariable: 'DOCKER_PASSWORD'
                         )
                     ]) {
-                    def authJson = '''
-                        {
-                            "auths": {
-                                "https://index.docker.io/v1/": {
-                                    "username": "%s",
-                                    "password": "%s"
+                        def authJson = '''
+                            {
+                                "auths": {
+                                    "https://index.docker.io/v1/": {
+                                        "username": "%s",
+                                        "password": "%s"
+                                    }
                                 }
                             }
-                        }
-                    '''.stripIndent().trim()
-                    
-                    def config = String.format(authJson, env.DOCKER_USER, env.DOCKER_PASSWORD)
-                    writeFile file: '.docker-config.json', text: config
-                    
-                    def imageName = readFile('image-name.txt').trim()
-                    def imageTag = readFile('image-tag.txt').trim()
-                    def imageTagEnvironment = (env.GIT_TAG_NAME || env.TAG_NAME) ? 'staging' : 'latest'
+                        '''.stripIndent().trim()
+                        
+                        def config = String.format(authJson, env.DOCKER_USER, env.DOCKER_PASSWORD)
+                        writeFile file: '.docker-config.json', text: config
+                        
+                        def imageName = readFile('image-name.txt').trim()
+                        def imageTag = readFile('image-tag.txt').trim()
+                        def imageTagEnvironment = (env.GIT_TAG_NAME || env.TAG_NAME) ? 'staging' : 'latest'
 
-                    sh """
-                        docker run --rm \
-                            -v ${pwd()}:/workspace \
-                            -v ${pwd()}/.docker-config.json:/kaniko/.docker/config.json \
-                            gcr.io/kaniko-project/executor:latest \
-                            /kaniko/executor \
-                                --context=/workspace \
-                                --dockerfile=/workspace/Dockerfile \
-                                --destination=${imageName}:${imageTag} \
-                                --destination=${imageName}:${imageTagEnvironment}
-                    """
+                        sh """
+                            docker run --rm \
+                                -v ${pwd()}:/workspace \
+                                -v ${pwd()}/.docker-config.json:/kaniko/.docker/config.json \
+                                gcr.io/kaniko-project/executor:latest \
+                                /kaniko/executor \
+                                    --context=/workspace \
+                                    --dockerfile=/workspace/Dockerfile \
+                                    --destination=${imageName}:${imageTag} \
+                                    --destination=${imageName}:${imageTagEnvironment}
+                        """
+                    }
                 }
             }
         }
