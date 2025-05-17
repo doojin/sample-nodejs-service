@@ -116,7 +116,7 @@ pipeline {
                         
                         def imageName = readFile('image-name.txt').trim()
                         def imageTag = readFile('image-tag.txt').trim()
-                        def imageTagEnvironment = (env.GIT_TAG_NAME || env.TAG_NAME) ? 'staging' : 'latest'
+                        def imageTagEnvironment = (env.GIT_TAG_NAME || env.TAG_NAME) ? 'latest' : 'staging'
 
                         sh """
                             docker run --rm \
