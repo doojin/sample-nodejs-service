@@ -146,7 +146,7 @@ pipeline {
             steps {
                 unstash 'image-metadata'
                 script {
-                    docker.image('lachlanevenson/k8s-helm:v3.10.2').inside {
+                    docker.image('lachlanevenson/k8s-helm:v3.10.2').inside('--entrypoint=') {
                         def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
                         def dbCredentialsId = isTagBuild ? 'postgres-prod' : 'postgres-staging'
                         def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
