@@ -93,35 +93,39 @@ pipeline {
             steps {
                 unstash 'image-metadata'
                 script {
-                    try {
-                        withCredentials([
-                            usernamePassword(
-                                credentialsId: 'docker-hub', 
-                                usernameVariable: 'DOCKER_USER', 
-                                passwordVariable: 'DOCKER_PASSWORD'
-                            )
-                        ]) {
-                            sh '''
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
-                            '''
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'docker-hub', 
+                            usernameVariable: 'DOCKER_USER', 
+                            passwordVariable: 'DOCKER_PASSWORD'
+                        )
+                    ]) {
+                        writeFile file: '.docker-config.json', text: """
+                        {
+                            "auths": {
+                                "https://index.docker.io/v1/": {
+                                    "username": "${DOCKER_USER}",
+                                    "password": "${DOCKER_PASSWORD}"
+                                }
+                            }
                         }
+                        """
+                    }
 
-                        def imageName = readFile('image-name.txt').trim()
-                        def imageTag = readFile('image-tag.txt').trim()
+                    def imageName = readFile('image-name.txt').trim()
+                    def imageTag = readFile('image-tag.txt').trim()
+                    def imageTagEnvironment = env.GIT_TAG_NAME || env.TAG_NAME ? 'staging' : 'latest'
 
-                        sh "docker image build -t ${imageName}:${imageTag} ."
-                        sh "docker push ${imageName}:${imageTag}"
-
-                        if (env.GIT_TAG_NAME || env.TAG_NAME) {
-                            sh "docker image tag ${imageName}:${imageTag} ${imageName}:staging"
-                            sh "docker push ${imageName}:staging"
-                        } else {
-                            sh "docker image tag ${imageName}:${imageTag} ${imageName}:latest"
-                            sh "docker push ${imageName}:latest"
-                        }
-
-                    } finally {
-                        sh 'docker logout'
+                    docker.image('gcr.io/kaniko-project/executor:latest').inside(
+                        "-v ${pwd()}:/workspace -v ${pwd()}/.docker-config.json:/kaniko/.docker/config.json"
+                    ) {
+                        sh """
+                            /kaniko/executor \
+                                --context=/workspace \
+                                --dockerfile=/workspace/Dockerfile \
+                                --destination=${imageName}:${imageTag} \
+                                --destination=${imageName}:${imageTagEnvironment}
+                        """
                     }
                 }
             }
