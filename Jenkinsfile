@@ -168,6 +168,10 @@ pipeline {
                         ]) {
                             sh """
                                 export KUBECONFIG=\${KUBECONFIG_FILE}
+                                export HOME=/tmp/home
+
+                                mkdir -p \$HOME/.config
+                                
                                 kubectl create secret generic db-password \\
                                     --from-literal=username=\$DB_USERNAME \\
                                     --from-literal=password=\$DB_PASSWORD \\
