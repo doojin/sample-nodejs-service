@@ -146,44 +146,41 @@ pipeline {
             steps {
                 unstash 'image-metadata'
                 script {
-                    def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
-                    def dbCredentialsId = isTagBuild ? 'postgres-prod' : 'postgres-staging'
-                    def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
+                    docker.image('lachlanevenson/k8s-helm:v3.10.2').inside {
+                        def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
+                        def dbCredentialsId = isTagBuild ? 'postgres-prod' : 'postgres-staging'
+                        def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
 
-                    // Preparing database secrets
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: dbCredentialsId,
-                            usernameVariable: 'DB_USERNAME',
-                            passwordVariable: 'DB_PASSWORD'
-                        ),
-                        file(
-                            credentialsId: kubeConfigCredentialsId,
-                            variable: 'KUBECONFIG_FILE'
-                        )
-                    ]) {
-                        sh """
-                            export KUBECONFIG=\${KUBECONFIG_FILE}
-                            kubectl create secret generic db-password \\
-                                --from-literal=username=\$DB_USERNAME \\
-                                --from-literal=password=\$DB_PASSWORD \\
-                                --dry-run=client -o yaml | kubectl apply -f -
-                        """
-                    }
+                        // Releasing Helm chart
+                        def imageTag = readFile('image-tag.txt').trim()
 
-                    // Releasing Helm chart
-                    def imageTag = readFile('image-tag.txt').trim()
-
-                    withCredentials([file(credentialsId: kubeConfigCredentialsId, variable: 'KUBECONFIG_FILE')]) {
-                        sh """
-                            export KUBECONFIG=\${KUBECONFIG_FILE}
-                            helm repo add bitnami https://charts.bitnami.com/bitnami
-                            helm repo update
-                            helm dependency build chart/main
-                            helm upgrade --install -f ./chart/main/values.yaml \\
-                                --set image.tag=${imageTag} \\
-                                sample-nodejs-service ./chart/main
-                        """
+                        // Preparing database secrets
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: dbCredentialsId,
+                                usernameVariable: 'DB_USERNAME',
+                                passwordVariable: 'DB_PASSWORD'
+                            ),
+                            file(
+                                credentialsId: kubeConfigCredentialsId,
+                                variable: 'KUBECONFIG_FILE'
+                            )
+                        ]) {
+                            sh """
+                                export KUBECONFIG=\${KUBECONFIG_FILE}
+                                kubectl create secret generic db-password \\
+                                    --from-literal=username=\$DB_USERNAME \\
+                                    --from-literal=password=\$DB_PASSWORD \\
+                                    --dry-run=client -o yaml | kubectl apply -f -
+     
+                                helm repo add bitnami https://charts.bitnami.com/bitnami
+                                helm repo update
+                                helm dependency build chart/main
+                                helm upgrade --install -f ./chart/main/values.yaml \\
+                                    --set image.tag=${imageTag} \\
+                                    sample-nodejs-service ./chart/main
+                            """
+                        }
                     }
                 }
             }
