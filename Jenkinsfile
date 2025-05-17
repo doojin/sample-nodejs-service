@@ -50,10 +50,14 @@ pipeline {
                 stage('Lint') {
                     agent any
                     steps {
-                        withChecks(name: 'ESLint') {
-                            unstash 'node_modules'
-                            sh 'npm run lint'
-                            publishChecks name: 'ESLint', status: 'COMPLETED', conclusion: 'SUCCESS'
+                        script {
+                            docker.image('node:24-slim').inside {
+                                withChecks(name: 'ESLint') {
+                                    unstash 'node_modules'
+                                    sh 'npm run lint'
+                                    publishChecks name: 'ESLint', status: 'COMPLETED', conclusion: 'SUCCESS'
+                                }
+                            }
                         }
                     }
                 }
@@ -61,11 +65,15 @@ pipeline {
                 stage('Unit tests') {
                     agent any
                     steps {
-                        withChecks(name: 'Unit tests') {
-                            unstash 'node_modules'
-                            sh 'npm run test:ci'
-                            junit (allowEmptyResults: true, testResults: 'junit.xml')
-                            publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
+                        script {
+                            docker.image('node:24-slim').inside {
+                                withChecks(name: 'Unit tests') {
+                                    unstash 'node_modules'
+                                    sh 'npm run test:ci'
+                                    junit (allowEmptyResults: true, testResults: 'junit.xml')
+                                    publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
+                                }
+                            }
                         }
                     }
                 }
