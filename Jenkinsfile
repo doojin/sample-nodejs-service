@@ -50,7 +50,6 @@ pipeline {
           script {
             sh 'npm config set cache /tmp/npm-cache --location=user'
             sh 'npm ci'
-            stash name: 'node_modules', includes: 'node_modules/**'
           }
         }
       }
@@ -61,7 +60,6 @@ pipeline {
         container('nodejs') {
           script {
             withChecks(name: 'Build project') {
-              unstash 'node_modules'
               sh 'npm run build'
               publishChecks name: 'Build project', status: 'COMPLETED', conclusion: 'SUCCESS'
             }
