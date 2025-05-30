@@ -67,5 +67,32 @@ pipeline {
         }
       }
     }
+
+    stage('Run ESLint') {
+      steps {
+        container('nodejs') {
+          script {
+            withChecks(name: 'ESLint') {
+              sh 'npm run lint'
+              publishChecks name: 'ESLint', status: 'COMPLETED', conclusion: 'SUCCESS'
+            }
+          }
+        }
+      }
+    }
+
+    stage('Run unit tests') {
+      steps {
+        container('nodejs') {
+          script {
+            withChecks(name: 'Unit tests') {
+              sh 'npm run test:ci'
+              junit (allowEmptyResults: true, testResults: 'junit.xml')
+              publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
+            }
+          }
+        }
+      }
+    }
   }
 }
