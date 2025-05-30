@@ -32,6 +32,15 @@ pipeline {
                 - name: workspace
                   mountPath: /workspace
 
+            - name: helm-kubectl
+              image: dtzar/helm-kubectl:3.17.2
+              command:
+                - cat
+              tty: true
+              env:
+                - name: HOME
+                  value: /tmp/home
+
           volumes:
             - name: docker-config
               emptyDir: {}
@@ -162,6 +171,62 @@ pipeline {
                   --dockerfile=/workspace/Dockerfile \
                   --destination=${imageName}:${imageTag} \
                   --destination=${imageName}:${imageTagEnvironment}
+              """
+            }
+          }
+        }
+      }
+    }
+
+    stage('Deployment') {
+      when {
+        anyOf {
+          branch 'main'
+          expression {
+            env.BRANCH_NAME ==~ /^v\d+\.\d+\.\d+$/
+          }
+        }
+      }
+
+      steps {
+        container('helm-kubectl') {
+          script {
+            unstash 'image-metadata'
+            def isTagBuild = env.GIT_TAG_NAME || env.TAG_NAME
+            def dbCredentialsId = isTagBuild ? 'postgres-prod' : 'postgres-staging'
+            def kubeConfigCredentialsId = isTagBuild ? 'kube-config-prod' : 'kube-config-staging'
+
+            // Releasing Helm chart
+            def imageTag = readFile('image-tag.txt').trim()
+
+            // Preparing database secrets
+            withCredentials([
+              usernamePassword(
+                credentialsId: dbCredentialsId,
+                usernameVariable: 'DB_USERNAME',
+                passwordVariable: 'DB_PASSWORD'
+              ),
+              file(
+                credentialsId: kubeConfigCredentialsId,
+                variable: 'KUBECONFIG_FILE'
+              )
+            ]) {
+              sh """
+                export KUBECONFIG=\${KUBECONFIG_FILE}
+
+                mkdir -p \$HOME/.config
+                
+                kubectl create secret generic db-password \\
+                  --from-literal=username=\$DB_USERNAME \\
+                  --from-literal=password=\$DB_PASSWORD \\
+                  --dry-run=client -o yaml | kubectl apply -f -
+
+                helm repo add bitnami https://charts.bitnami.com/bitnami
+                helm repo update
+                helm dependency build chart/main
+                helm upgrade --install -f ./chart/main/values.yaml \\
+                  --set image.tag=${imageTag} \\
+                  sample-nodejs-service ./chart/main
               """
             }
           }
