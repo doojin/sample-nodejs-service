@@ -20,6 +20,8 @@ pipeline {
       steps {
         container('git') {
           script {
+            sh 'git config --global --add safe.directory "$WORKSPACE"'
+            
             def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
             def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
             def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
