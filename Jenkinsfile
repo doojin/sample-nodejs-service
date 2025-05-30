@@ -20,6 +20,22 @@ pipeline {
               env:
                 - name: HOME
                   value: /tmp/home
+
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:latest
+              command:
+                - cat
+              volumeMounts:
+                - name: docker-config
+                  mountPath: /kaniko/.docker
+                - name: workspace
+                  mountPath: /workspace
+
+          volumes:
+            - name: docker-config
+              emptyDir: {}
+            - name: workspace
+              emptyDir: {}
       '''
     }
   }
@@ -89,6 +105,61 @@ pipeline {
               sh 'npm run test:ci'
               junit (allowEmptyResults: true, testResults: 'junit.xml')
               publishChecks name: 'Unit tests', status: 'COMPLETED', conclusion: 'SUCCESS'
+            }
+          }
+        }
+      }
+    }
+
+    stage('Build & push image') {
+      when {
+        anyOf {
+          branch 'main'
+          expression {
+            env.BRANCH_NAME ==~ /^v\d+\.\d+\.\d+$/
+          }
+        }
+      }
+
+      steps {
+        container('kaniko') {
+          script {
+            unstash 'image-metadata'
+
+            withCredentials([
+              usernamePassword(
+                credentialsId: 'docker-hub', 
+                usernameVariable: 'DOCKER_USER', 
+                passwordVariable: 'DOCKER_PASSWORD'
+              )
+            ]) {
+              def authJson = '''
+                {
+                  "auths": {
+                    "https://index.docker.io/v1/": {
+                      "username": "%s",
+                      "password": "%s"
+                    }
+                  }
+                }
+              '''.stripIndent().trim()
+
+              sh 'cp -r . /workspace'
+              
+              def config = String.format(authJson, env.DOCKER_USER, env.DOCKER_PASSWORD)
+              writeFile file: '/kaniko/.docker/config.json', text: config
+              
+              def imageName = readFile('image-name.txt').trim()
+              def imageTag = readFile('image-tag.txt').trim()
+              def imageTagEnvironment = (env.GIT_TAG_NAME || env.TAG_NAME) ? 'latest' : 'staging'
+
+              sh """
+                /kaniko/executor \
+                  --context=/workspace \
+                  --dockerfile=/workspace/Dockerfile \
+                  --destination=${imageName}:${imageTag} \
+                  --destination=${imageName}:${imageTagEnvironment}
+              """
             }
           }
         }
