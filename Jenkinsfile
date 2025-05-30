@@ -11,6 +11,15 @@ pipeline {
               command:
                 - cat
               tty: true
+
+            - name: nodejs
+              image: node:24-slim
+              command:
+                - cat
+              tty: true
+              env:
+                - name: HOME
+                  value: /tmp/home
       '''
     }
   }
@@ -21,7 +30,7 @@ pipeline {
         container('git') {
           script {
             sh 'git config --global --add safe.directory "$WORKSPACE"'
-            
+
             def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
             def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
             def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
@@ -30,6 +39,18 @@ pipeline {
             writeFile(file: 'image-name.txt', text: 'dmi3papka/sample-nodejs-service')
 
             stash(name: 'image-metadata', includes: 'image-tag.txt,image-name.txt')
+          }
+        }
+      }
+    }
+
+    stage('Install project dependencies') {
+      steps {
+        container('nodejs') {
+          script {
+            sh 'npm config set cache /tmp/npm-cache --location=user'
+            sh 'npm ci'
+            stash name: 'node_modules', includes: 'node_modules/**'
           }
         }
       }
