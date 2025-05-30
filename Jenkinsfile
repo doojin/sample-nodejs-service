@@ -22,8 +22,9 @@ pipeline {
                   value: /tmp/home
 
             - name: kaniko
-              image: gcr.io/kaniko-project/executor:latest
-              command: ["/busybox/sh", "-c", "sleep infinity"]
+              image: gcr.io/kaniko-project/executor:debug
+              command:
+                - cat
               volumeMounts:
                 - name: docker-config
                   mountPath: /kaniko/.docker
