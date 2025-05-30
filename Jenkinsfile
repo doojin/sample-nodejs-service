@@ -55,5 +55,19 @@ pipeline {
         }
       }
     }
+
+    stage('Build project') {
+      steps {
+        container('nodejs') {
+          script {
+            withChecks(name: 'Build project') {
+              unstash 'node_modules'
+              sh 'npm run build'
+              publishChecks name: 'Build project', status: 'COMPLETED', conclusion: 'SUCCESS'
+            }
+          }
+        }
+      }
+    }
   }
 }
