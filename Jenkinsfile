@@ -148,7 +148,9 @@ pipeline {
               sh 'cp -r . /workspace'
               
               def config = String.format(authJson, env.DOCKER_USER, env.DOCKER_PASSWORD)
-              writeFile file: '/kaniko/.docker/config.json', text: config
+              writeFile file: 'docker-config.json', text: config
+              sh 'cp docker-config.json /kaniko/.docker/config.json'
+              sh 'rm docker-config.json'
               
               def imageName = readFile('image-name.txt').trim()
               def imageTag = readFile('image-tag.txt').trim()
