@@ -19,7 +19,7 @@ pipeline {
     stage('Greetings') {
       steps {
         container('alpine') {
-          sh 'echo Hello, world!'
+          sh 'echo Hello, world!!'
         }
       }
     }
