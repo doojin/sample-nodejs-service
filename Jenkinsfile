@@ -19,14 +19,16 @@ pipeline {
     stage('Prepare') {
       steps {
         container('git') {
-          def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
-          def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-          def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
+          script {
+            def tagName = env.GIT_TAG_NAME ?: env.TAG_NAME
+            def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            def imageTag = tagName ? tagName.replaceFirst(/^v/, '') : "staging-${commit}"
 
-          writeFile(file: 'image-tag.txt', text: imageTag)
-          writeFile(file: 'image-name.txt', text: 'dmi3papka/sample-nodejs-service')
+            writeFile(file: 'image-tag.txt', text: imageTag)
+            writeFile(file: 'image-name.txt', text: 'dmi3papka/sample-nodejs-service')
 
-          stash(name: 'image-metadata', includes: 'image-tag.txt,image-name.txt')
+            stash(name: 'image-metadata', includes: 'image-tag.txt,image-name.txt')
+          }
         }
       }
     }
