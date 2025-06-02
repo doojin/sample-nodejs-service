@@ -102,3 +102,4 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 npx ts-node -r tsconfig-paths/register node_modules/typeorm/cli.js migration:generate -d ./src/database/datasource.ts ./src/database/migrations/MigrationName
 npx ts-node -r tsconfig-paths/register node_modules/typeorm/cli.js migration:run -d src/database/datasource.ts
 ```
+
